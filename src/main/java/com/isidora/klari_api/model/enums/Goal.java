@@ -1,6 +1,6 @@
 package com.isidora.klari_api.model.enums;
 
-public enum Goals {
+public enum Goal {
     MANCHAS("Eliminar manchas"),
     TEXTURA("Mejorar textura"),
     IRRITACION("Reducir irritación"),
@@ -10,7 +10,7 @@ public enum Goals {
 
     private final String displayName;
 
-    Goals(String displayName) {
+    Goal(String displayName) {
         this.displayName = displayName;
     }
 
