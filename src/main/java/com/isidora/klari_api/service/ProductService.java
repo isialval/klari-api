@@ -1,5 +1,7 @@
 package com.isidora.klari_api.service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -94,27 +96,22 @@ public class ProductService {
             SkinType skinType,
             Set<Goal> goals) {
 
-        List<Product> results;
+        Set<Product> results = new LinkedHashSet<>();
 
-        // Prioridad 1: category + time + skinType + goals
-        results = productRepository.findByCategoryAndTimeAndSkinTypeAndGoals(category, time, skinType, goals);
-        if (!results.isEmpty()) {
-            return results;
+        results.addAll(productRepository.findByCategoryAndTimeAndSkinTypeAndGoals(category, time, skinType, goals));
+
+        if (results.size() < 6) {
+            results.addAll(productRepository.findByCategoryAndTimeAndSkinType(category, time, skinType));
         }
 
-        // Prioridad 2: category + time + skinType
-        results = productRepository.findByCategoryAndTimeAndSkinType(category, time, skinType);
-        if (!results.isEmpty()) {
-            return results;
+        if (results.size() < 6) {
+            results.addAll(productRepository.findByCategoryAndTimeAndGoals(category, time, goals));
         }
 
-        // Prioridad 3: category + time + goals
-        results = productRepository.findByCategoryAndTimeAndGoals(category, time, goals);
-        if (!results.isEmpty()) {
-            return results;
+        if (results.size() < 6) {
+            results.addAll(productRepository.findByCategoryAndTime(category, time));
         }
 
-        // Prioridad 4: category + time (siempre devuelve algo)
-        return productRepository.findByCategoryAndTime(category, time);
+        return new ArrayList<>(results);
     }
 }

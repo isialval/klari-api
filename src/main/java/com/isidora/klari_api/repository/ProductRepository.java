@@ -25,7 +25,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(String name, String brand);
 
-    // Búsqueda combinada de texto y categoría
     @Query("SELECT p FROM Product p WHERE " +
             "(LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(p.brand) LIKE LOWER(CONCAT('%', :query, '%'))) " +
@@ -34,17 +33,14 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("query") String query,
             @Param("category") ProductCategory category);
 
-    // Productos compatibles con un tipo de piel
     @Query("SELECT p FROM Product p WHERE :skinType MEMBER OF p.skinTypes")
     List<Product> findBySkinType(@Param("skinType") SkinType skinType);
 
-    // Productos que ayudan con un goal específico
     @Query("SELECT p FROM Product p WHERE :goal MEMBER OF p.goals")
     List<Product> findByGoal(@Param("goal") Goal goal);
 
-    // En ProductRepository.java (igual que antes)
+    // Recomendaciones para rutinas
 
-    // Prioridad 1 recomendaciones
     @Query("SELECT p FROM Product p WHERE " +
             "p.category = :category " +
             "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH') " +
@@ -56,7 +52,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("skinType") SkinType skinType,
             @Param("goals") Set<Goal> goals);
 
-    // Prioridad 2 recomendaciones
     @Query("SELECT p FROM Product p WHERE " +
             "p.category = :category " +
             "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH') " +
@@ -66,7 +61,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("time") ProductApplicationTime time,
             @Param("skinType") SkinType skinType);
 
-    // Prioridad 3 recomendaciones
     @Query("SELECT p FROM Product p WHERE " +
             "p.category = :category " +
             "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH') " +
@@ -76,7 +70,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("time") ProductApplicationTime time,
             @Param("goals") Set<Goal> goals);
 
-    // Prioridad 4 recomendaciones
     @Query("SELECT p FROM Product p WHERE " +
             "p.category = :category " +
             "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH')")
