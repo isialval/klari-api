@@ -46,12 +46,10 @@ public class User {
     private String password;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private SkinType skinType;
 
     @ElementCollection
     @Enumerated(EnumType.STRING)
-    @NotEmpty
     private Set<Goal> goals = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
