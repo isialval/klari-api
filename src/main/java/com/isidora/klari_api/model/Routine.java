@@ -3,7 +3,6 @@ package com.isidora.klari_api.model;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import com.isidora.klari_api.model.enums.RoutineType;
 
