@@ -66,7 +66,7 @@ public class RoutineService {
         }
     }
 
-    // añadir y quitar productos a rutina
+    // Añadir y quitar productos a rutina existente
     @Transactional
     public void addProduct(Long routineId, Long productId) {
         Routine routine = routineRepository.findById(routineId)
@@ -149,7 +149,7 @@ public class RoutineService {
         }
     }
 
-    // activar y desactivar rutinas
+    // Activar y desactivar rutinas
     @Transactional
     public void deactivate(Long routineId) {
         Routine routine = routineRepository.findById(routineId)
