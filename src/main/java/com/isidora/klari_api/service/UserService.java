@@ -37,7 +37,7 @@ public class UserService {
     }
 
     public Optional<User> findbyUserName(String userName) {
-        return userRepository.findByUserName(userName);
+        return userRepository.findByUsername(userName);
     }
 
     // favoritos e inventario
