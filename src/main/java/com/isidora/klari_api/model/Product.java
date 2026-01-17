@@ -43,10 +43,10 @@ public class Product {
     @Column(nullable = false)
     private String imageUrl;
 
-    @Column(length = 2000)
+    @Column(length = 200000)
     private String ingredients;
 
-    @Column(length = 2000)
+    @Column(length = 200000)
     private String description;
 
     @Enumerated(EnumType.STRING)

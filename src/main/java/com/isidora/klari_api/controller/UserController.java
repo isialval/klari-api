@@ -40,9 +40,9 @@ public class UserController {
         return ResponseEntity.ok(userService.findById(id));
     }
 
-    @GetMapping("/username/{username}")
-    public ResponseEntity<User> findByUsername(@PathVariable String username) {
-        return userService.findbyUserName(username)
+    @GetMapping("/email/{email}")
+    public ResponseEntity<User> findByUsername(@PathVariable String email) {
+        return userService.findbyEmail(email)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }

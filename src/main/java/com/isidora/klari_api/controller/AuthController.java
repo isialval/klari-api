@@ -18,17 +18,18 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@RequestBody AuthRequest request) {
-        AuthResponse response = authService.register(request.username(), request.password());
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ResponseEntity<AuthResponse> register(@RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(authService.register(request.username(), request.email(), request.password()));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
-        AuthResponse response = authService.login(request.username(), request.password());
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request.email(), request.password()));
     }
 
-    public record AuthRequest(String username, String password) {
+    record RegisterRequest(String username, String email, String password) {
+    }
+
+    record LoginRequest(String email, String password) {
     }
 }

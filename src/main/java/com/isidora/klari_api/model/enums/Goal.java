@@ -5,8 +5,7 @@ public enum Goal {
     TEXTURA("Mejorar textura"),
     IRRITACION("Reducir irritación"),
     LINEAS_EXPRESION("Disminuir líneas de expresión"),
-    POROS("Minimizar poros"),
-    HIDRATACION("Aumentar hidratación");
+    POROS("Minimizar poros");
 
     private final String displayName;
 

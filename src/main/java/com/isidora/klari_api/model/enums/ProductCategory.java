@@ -6,11 +6,8 @@ public enum ProductCategory {
     HIDRATANTE("Hidratante"),
     SERUM("Serum"),
     PROTECTOR_SOLAR("Protector solar"),
-    EXFOLIANTE("Exfoliante"),
     MASCARILLA("Mascarilla"),
-    CONTORNO_OJOS("Contorno de ojos"),
-    ACEITE("Aceite"),
-    OTRO("Otro");
+    CONTORNO_OJOS("Contorno de ojos");
 
     private final String displayName;
 
