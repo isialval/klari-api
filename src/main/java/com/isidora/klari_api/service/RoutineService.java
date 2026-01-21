@@ -3,8 +3,11 @@ package com.isidora.klari_api.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.isidora.klari_api.model.Product;
 import com.isidora.klari_api.model.Routine;
@@ -15,6 +18,7 @@ import com.isidora.klari_api.model.enums.RoutineType;
 import com.isidora.klari_api.repository.ProductRepository;
 import com.isidora.klari_api.repository.RoutineRepository;
 import com.isidora.klari_api.repository.UserRepository;
+import org.springframework.security.core.Authentication;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,48 +33,58 @@ public class RoutineService {
     private final ProductService productService;
 
     public Routine create(Routine routine) {
+        if (routine.getUser() == null || routine.getUser().getId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La rutina debe tener user");
+        }
+        assertSelf(routine.getUser().getId());
         return routineRepository.save(routine);
     }
 
     public Optional<Routine> findById(Long id) {
-        return routineRepository.findById(id);
+        Optional<Routine> routine = routineRepository.findById(id);
+        routine.ifPresent(this::assertOwner);
+        return routine;
     }
 
-    public List<Routine> findByUserId(Long id) {
-        return routineRepository.findByUserId(id);
+    public List<Routine> findByUserId(Long userId) {
+        assertSelf(userId);
+        return routineRepository.findByUserId(userId);
     }
 
     public Optional<Routine> findActiveDayRoutine(Long userId) {
+        assertSelf(userId);
         return routineRepository.findActiveRoutine(RoutineType.DIA, userId);
     }
 
     public List<Routine> findInactiveDayRoutines(Long userId) {
+        assertSelf(userId);
         return routineRepository.findInactiveRoutines(RoutineType.DIA, userId);
     }
 
     public Optional<Routine> findActiveNightRoutine(Long userId) {
+        assertSelf(userId);
         return routineRepository.findActiveRoutine(RoutineType.NOCHE, userId);
     }
 
     public List<Routine> findInactiveNightRoutines(Long userId) {
+        assertSelf(userId);
         return routineRepository.findInactiveRoutines(RoutineType.NOCHE, userId);
     }
 
     @Transactional
     public void remove(Long routineId) {
-        Routine routine = routineRepository.findById(routineId).orElse(null);
+        Routine routine = findRoutineOrThrow(routineId);
+        assertOwner(routine);
 
-        if (routine != null) {
-            routine.getProducts().clear();
-            routineRepository.delete(routine);
-        }
+        routine.getProducts().clear();
+        routineRepository.delete(routine);
     }
 
     // Añadir y quitar productos a rutina existente
     @Transactional
     public void addProduct(Long routineId, Long productId) {
-        Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new RuntimeException("Rutina no encontrada"));
+        Routine routine = findRoutineOrThrow(routineId);
+        assertOwner(routine);
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
@@ -84,8 +98,8 @@ public class RoutineService {
 
     @Transactional
     public void removeProduct(Long routineId, Long productId) {
-        Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new RuntimeException("Rutina no encontrada"));
+        Routine routine = findRoutineOrThrow(routineId);
+        assertOwner(routine);
 
         routine.getProducts().removeIf(p -> p.getId().equals(productId));
 
@@ -95,6 +109,7 @@ public class RoutineService {
     // Rutinas iniciales (con productos básicos pre-seleccionados)
     @Transactional
     public Routine createInitialDayRoutine(Long userId) {
+        assertSelf(userId);
 
         Optional<Routine> existingRoutine = routineRepository.findActiveRoutine(RoutineType.DIA, userId);
         if (existingRoutine.isPresent()) {
@@ -119,6 +134,7 @@ public class RoutineService {
 
     @Transactional
     public Routine createInitialNightRoutine(Long userId) {
+        assertSelf(userId);
 
         Optional<Routine> existingRoutine = routineRepository.findActiveRoutine(RoutineType.NOCHE, userId);
         if (existingRoutine.isPresent()) {
@@ -152,8 +168,8 @@ public class RoutineService {
     // Activar y desactivar rutinas
     @Transactional
     public void deactivate(Long routineId) {
-        Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new RuntimeException("Rutina no encontrada"));
+        Routine routine = findRoutineOrThrow(routineId);
+        assertOwner(routine);
 
         routine.setActive(false);
         routineRepository.save(routine);
@@ -161,11 +177,41 @@ public class RoutineService {
 
     @Transactional
     public void activate(Long routineId) {
-        Routine routine = routineRepository.findById(routineId)
-                .orElseThrow(() -> new RuntimeException("Rutina no encontrada"));
+        Routine routine = findRoutineOrThrow(routineId);
+        assertOwner(routine);
 
         routine.setActive(true);
         routineRepository.save(routine);
+    }
+
+    // helpers
+
+    private Long authUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
+        }
+        return (Long) auth.getPrincipal(); // JwtFilter -> principal=userId
+    }
+
+    private void assertSelf(Long pathUserId) {
+        Long me = authUserId();
+        if (!me.equals(pathUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
+    }
+
+    private Routine findRoutineOrThrow(Long routineId) {
+        return routineRepository.findById(routineId)
+                .orElseThrow(() -> new RuntimeException("Rutina no encontrada"));
+    }
+
+    private void assertOwner(Routine routine) {
+        Long me = authUserId();
+        Long ownerId = routine.getUser().getId();
+        if (!me.equals(ownerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
     }
 
 }

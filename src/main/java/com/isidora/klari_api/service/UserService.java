@@ -14,6 +14,10 @@ import com.isidora.klari_api.model.enums.Goal;
 import com.isidora.klari_api.model.enums.SkinType;
 import com.isidora.klari_api.repository.ProductRepository;
 import com.isidora.klari_api.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,20 +28,9 @@ public class UserService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
 
-    public User create(User user) {
-        return userRepository.save(user);
-    }
-
-    public List<User> findAll() {
-        return userRepository.findAll();
-    }
-
     public User findById(Long id) {
+        assertSelf(id);
         return userRepository.findById(id).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-    }
-
-    public Optional<User> findbyEmail(String email) {
-        return userRepository.findByEmail(email);
     }
 
     // favoritos e inventario
@@ -56,6 +49,7 @@ public class UserService {
 
     @Transactional
     public void addFavorite(Long userId, Long productId) {
+        assertSelf(userId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -64,6 +58,7 @@ public class UserService {
 
     @Transactional
     public void addToInventory(Long userId, Long productId) {
+        assertSelf(userId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -72,6 +67,7 @@ public class UserService {
 
     @Transactional
     public void removeFavorite(Long userId, Long productId) {
+        assertSelf(userId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -80,6 +76,7 @@ public class UserService {
 
     @Transactional
     public void removeFromInventory(Long userId, Long productId) {
+        assertSelf(userId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
@@ -89,34 +86,55 @@ public class UserService {
     // Tipo de piel, objetivos y rutinas
 
     public SkinType getSkinType(Long id) {
+        assertSelf(id);
         return findById(id).getSkinType();
     }
 
     @Transactional(readOnly = true)
     public Set<Goal> getGoals(Long id) {
+        assertSelf(id);
         return findById(id).getGoals();
     }
 
     @Transactional(readOnly = true)
     public List<Routine> getRoutines(Long id) {
+        assertSelf(id);
         return findById(id).getRoutines();
     }
 
     @Transactional
     public void setSkinType(Long userId, SkinType skinType) {
+        assertSelf(userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         user.setSkinType(skinType);
     }
 
     @Transactional
     public void addGoal(Long userId, Goal goal) {
+        assertSelf(userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         user.getGoals().add(goal);
     }
 
     @Transactional
     public void removeGoal(Long userId, Goal goal) {
+        assertSelf(userId);
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
         user.getGoals().remove(goal);
+    }
+
+    private Long authUserId() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No autenticado");
+        }
+        return (Long) auth.getPrincipal(); // viene del JwtFilter (principal=userId)
+    }
+
+    private void assertSelf(Long pathUserId) {
+        Long me = authUserId();
+        if (!me.equals(pathUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "No autorizado");
+        }
     }
 }
