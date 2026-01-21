@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.isidora.klari_api.model.enums.Goal;
 import com.isidora.klari_api.model.enums.SkinType;
 
@@ -55,6 +56,7 @@ public class User {
     private Set<Goal> goals = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Routine> routines = new ArrayList<>();
 
     @ManyToMany

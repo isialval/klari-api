@@ -17,64 +17,67 @@ import com.isidora.klari_api.model.enums.SkinType;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    List<Product> findByCategory(ProductCategory category);
+        List<Product> findByCategory(ProductCategory category);
 
-    List<Product> findByApplicationTime(ProductApplicationTime applicationTime);
+        List<Product> findByApplicationTime(ProductApplicationTime applicationTime);
 
-    List<Product> findByBrand(String brand);
+        List<Product> findByBrand(String brand);
 
-    List<Product> findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(String name, String brand);
+        List<Product> findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(String name, String brand);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "(LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-            "LOWER(p.brand) LIKE LOWER(CONCAT('%', :query, '%'))) " +
-            "AND p.category = :category")
-    List<Product> findByQueryAndCategory(
-            @Param("query") String query,
-            @Param("category") ProductCategory category);
+        @Query("SELECT p FROM Product p WHERE " +
+                        "(LOWER(p.name) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
+                        "LOWER(p.brand) LIKE LOWER(CONCAT('%', :query, '%'))) " +
+                        "AND p.category = :category")
+        List<Product> findByQueryAndCategory(
+                        @Param("query") String query,
+                        @Param("category") ProductCategory category);
 
-    @Query("SELECT p FROM Product p WHERE :skinType MEMBER OF p.skinTypes")
-    List<Product> findBySkinType(@Param("skinType") SkinType skinType);
+        @Query("SELECT p FROM Product p WHERE :skinType MEMBER OF p.skinTypes")
+        List<Product> findBySkinType(@Param("skinType") SkinType skinType);
 
-    @Query("SELECT p FROM Product p WHERE :goal MEMBER OF p.goals")
-    List<Product> findByGoal(@Param("goal") Goal goal);
+        @Query("SELECT p FROM Product p WHERE :goal MEMBER OF p.goals")
+        List<Product> findByGoal(@Param("goal") Goal goal);
 
-    // Recomendaciones para rutinas
+        // Recomendaciones para rutinas
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.category = :category " +
-            "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH') " +
-            "AND :skinType MEMBER OF p.skinTypes " +
-            "AND EXISTS (SELECT g FROM p.goals g WHERE g IN :goals)")
-    List<Product> findByCategoryAndTimeAndSkinTypeAndGoals(
-            @Param("category") ProductCategory category,
-            @Param("time") ProductApplicationTime time,
-            @Param("skinType") SkinType skinType,
-            @Param("goals") Set<Goal> goals);
+        @Query("SELECT p FROM Product p WHERE " +
+                        "p.category = :category " +
+                        "AND (p.applicationTime = :time OR p.applicationTime = com.isidora.klari_api.model.enums.ProductApplicationTime.AMBOS) "
+                        +
+                        "AND :skinType MEMBER OF p.skinTypes " +
+                        "AND EXISTS (SELECT g FROM p.goals g WHERE g IN :goals)")
+        List<Product> findByCategoryAndTimeAndSkinTypeAndGoals(
+                        @Param("category") ProductCategory category,
+                        @Param("time") ProductApplicationTime time,
+                        @Param("skinType") SkinType skinType,
+                        @Param("goals") Set<Goal> goals);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.category = :category " +
-            "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH') " +
-            "AND :skinType MEMBER OF p.skinTypes")
-    List<Product> findByCategoryAndTimeAndSkinType(
-            @Param("category") ProductCategory category,
-            @Param("time") ProductApplicationTime time,
-            @Param("skinType") SkinType skinType);
+        @Query("SELECT p FROM Product p WHERE " +
+                        "p.category = :category " +
+                        "AND (p.applicationTime = :time OR p.applicationTime = com.isidora.klari_api.model.enums.ProductApplicationTime.AMBOS) "
+                        +
+                        "AND :skinType MEMBER OF p.skinTypes")
+        List<Product> findByCategoryAndTimeAndSkinType(
+                        @Param("category") ProductCategory category,
+                        @Param("time") ProductApplicationTime time,
+                        @Param("skinType") SkinType skinType);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.category = :category " +
-            "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH') " +
-            "AND EXISTS (SELECT g FROM p.goals g WHERE g IN :goals)")
-    List<Product> findByCategoryAndTimeAndGoals(
-            @Param("category") ProductCategory category,
-            @Param("time") ProductApplicationTime time,
-            @Param("goals") Set<Goal> goals);
+        @Query("SELECT p FROM Product p WHERE " +
+                        "p.category = :category " +
+                        "AND (p.applicationTime = :time OR p.applicationTime = com.isidora.klari_api.model.enums.ProductApplicationTime.AMBOS) "
+                        +
+                        "AND EXISTS (SELECT g FROM p.goals g WHERE g IN :goals)")
+        List<Product> findByCategoryAndTimeAndGoals(
+                        @Param("category") ProductCategory category,
+                        @Param("time") ProductApplicationTime time,
+                        @Param("goals") Set<Goal> goals);
 
-    @Query("SELECT p FROM Product p WHERE " +
-            "p.category = :category " +
-            "AND (p.applicationTime = :time OR p.applicationTime = 'BOTH')")
-    List<Product> findByCategoryAndTime(
-            @Param("category") ProductCategory category,
-            @Param("time") ProductApplicationTime time);
+        @Query("SELECT p FROM Product p WHERE " +
+                        "p.category = :category " +
+                        "AND (p.applicationTime = :time OR p.applicationTime = com.isidora.klari_api.model.enums.ProductApplicationTime.AMBOS)")
+        List<Product> findByCategoryAndTime(
+                        @Param("category") ProductCategory category,
+                        @Param("time") ProductApplicationTime time);
 
 }

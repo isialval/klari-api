@@ -111,6 +111,9 @@ public class ProductService {
         if (results.size() < 6) {
             results.addAll(productRepository.findByCategoryAndTime(category, time));
         }
+        if (results.isEmpty()) {
+            results.addAll(productRepository.findByCategory(category));
+        }
 
         return new ArrayList<>(results);
     }
