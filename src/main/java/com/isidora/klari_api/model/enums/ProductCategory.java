@@ -7,7 +7,7 @@ public enum ProductCategory {
     SERUM("Serum"),
     PROTECTOR_SOLAR("Protector solar"),
     MASCARILLA("Mascarilla"),
-    CONTORNO_OJOS("Contorno de ojos");
+    CONTORNO_DE_OJOS("Contorno de ojos");
 
     private final String displayName;
 

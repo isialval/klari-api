@@ -59,12 +59,10 @@ public class Product {
 
     @ElementCollection
     @Enumerated(EnumType.STRING)
-    @NotEmpty
     private Set<Goal> goals = new HashSet<>();
 
     @ElementCollection
     @Enumerated(EnumType.STRING)
-    @NotEmpty
     private Set<SkinType> skinTypes = new HashSet<>();
 
 }
