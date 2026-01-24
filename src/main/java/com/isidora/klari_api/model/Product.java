@@ -40,7 +40,7 @@ public class Product {
     @Column(nullable = false)
     private String brand;
 
-    @Column(nullable = false)
+    @Column(length = 200000)
     private String imageUrl;
 
     @Column(length = 200000)

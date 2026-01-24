@@ -3,10 +3,15 @@ package com.isidora.klari_api.controller;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.isidora.klari_api.dto.ProductSummaryDTO;
 import com.isidora.klari_api.model.Product;
 import com.isidora.klari_api.model.enums.Goal;
 import com.isidora.klari_api.model.enums.ProductApplicationTime;
@@ -40,6 +45,11 @@ public class ProductController {
         return ResponseEntity.ok(productService.findById(id));
     }
 
+    @GetMapping("/{id}/summary")
+    public ResponseEntity<ProductSummaryDTO> findSummaryById(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.findSummaryById(id));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Product> update(@PathVariable Long id, @Valid @RequestBody Product productDetails) {
         return ResponseEntity.ok(productService.update(id, productDetails));
@@ -59,35 +69,57 @@ public class ProductController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    // búsquedas específicas
+    // Búsquedas específicas - PAGINADAS
 
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<Product>> findByCategory(@PathVariable ProductCategory category) {
-        return ResponseEntity.ok(productService.findByCategory(category));
+    public ResponseEntity<Page<Product>> findByCategory(
+            @PathVariable ProductCategory category,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(productService.findByCategory(category, pageable));
     }
 
     @GetMapping("/brand/{brand}")
-    public ResponseEntity<List<Product>> findByBrand(@PathVariable String brand) {
-        return ResponseEntity.ok(productService.findByBrand(brand));
+    public ResponseEntity<Page<Product>> findByBrand(
+            @PathVariable String brand,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(productService.findByBrand(brand, pageable));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Product>> search(
+    public ResponseEntity<Page<Product>> search(
             @RequestParam(value = "q", required = false) String query,
-            @RequestParam(value = "category", required = false) ProductCategory category) {
-
-        return ResponseEntity.ok(productService.search(query, category));
+            @RequestParam(value = "category", required = false) ProductCategory category,
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(productService.search(query, category, pageable));
     }
 
-    // Recomendaciones para rutinas
+    // Recomendaciones para rutinas - PAGINADAS
     @GetMapping("/routine/recommend")
-    public ResponseEntity<List<Product>> recommendForRoutine(
+    public ResponseEntity<Page<ProductSummaryDTO>> recommendForRoutine(
             @RequestParam ProductCategory category,
             @RequestParam ProductApplicationTime time,
             @RequestParam SkinType skinType,
-            @RequestParam Set<Goal> goals) {
-
+            @RequestParam Set<Goal> goals,
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(
-                productService.findForRoutine(category, time, skinType, goals));
+                productService.findForRoutine(category, time, skinType, goals, pageable));
+    }
+
+    // Recomendaciones simples (sin paginación, con límite fijo)
+    @GetMapping("/routine/recommend/simple")
+    public ResponseEntity<List<ProductSummaryDTO>> recommendForRoutineSimple(
+            @RequestParam ProductCategory category,
+            @RequestParam ProductApplicationTime time,
+            @RequestParam SkinType skinType,
+            @RequestParam Set<Goal> goals,
+            @RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(
+                productService.findForRoutineSimple(category, time, skinType, goals, Math.min(limit, 50)));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<Page<ProductSummaryDTO>> findAllSummary(
+            @PageableDefault(size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ResponseEntity.ok(productService.findAllSummary(pageable));
     }
 }

@@ -1,12 +1,16 @@
 package com.isidora.klari_api.service;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.isidora.klari_api.dto.ProductSummaryDTO;
 import com.isidora.klari_api.model.Product;
 import com.isidora.klari_api.model.enums.Goal;
 import com.isidora.klari_api.model.enums.ProductApplicationTime;
@@ -31,7 +35,8 @@ public class ProductService {
     }
 
     public Product findById(Long id) {
-        return productRepository.findById(id).orElse(null);
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
     }
 
     public Product update(Long id, Product productDetails) {
@@ -55,66 +60,89 @@ public class ProductService {
         productRepository.delete(product);
     }
 
-    // búsquedas específicas
-
-    public List<Product> findByCategory(ProductCategory category) {
-        return productRepository.findByCategory(category);
+    public Page<Product> findByCategory(ProductCategory category, Pageable pageable) {
+        return productRepository.findByCategory(category, pageable);
     }
 
-    public List<Product> findByApplicationTime(ProductApplicationTime applicationTime) {
-        return productRepository.findByApplicationTime(applicationTime);
+    public Page<Product> findByApplicationTime(ProductApplicationTime applicationTime, Pageable pageable) {
+        return productRepository.findByApplicationTime(applicationTime, pageable);
     }
 
-    public List<Product> findByBrand(String brand) {
-        return productRepository.findByBrand(brand);
+    public Page<Product> findByBrand(String brand, Pageable pageable) {
+        return productRepository.findByBrandIgnoreCase(brand, pageable);
     }
 
-    public List<Product> search(String query, ProductCategory category) {
+    public Page<Product> search(String query, ProductCategory category, Pageable pageable) {
         boolean hasQuery = query != null && !query.trim().isEmpty();
         boolean hasCategory = category != null;
 
         if (hasQuery && hasCategory) {
-            return productRepository.findByQueryAndCategory(query.trim(), category);
+            return productRepository.findByQueryAndCategory(query.trim(), category, pageable);
         }
 
         if (hasCategory) {
-            return productRepository.findByCategory(category);
+            return productRepository.findByCategory(category, pageable);
         }
 
         if (hasQuery) {
-            return productRepository.findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(query, query);
+            return productRepository.findByNameContainingIgnoreCaseOrBrandContainingIgnoreCase(query, query, pageable);
         }
 
-        return productRepository.findAll();
+        return productRepository.findAll(pageable);
     }
 
-    // Para rutinas
-
-    public List<Product> findForRoutine(
+    public Page<ProductSummaryDTO> findForRoutine(
             ProductCategory category,
             ProductApplicationTime time,
             SkinType skinType,
-            Set<Goal> goals) {
+            Set<Goal> goals,
+            Pageable pageable) {
 
-        Set<Product> results = new LinkedHashSet<>();
+        Page<ProductSummaryDTO> results = productRepository.findRecommendationsFull(
+                category, time, skinType, goals, pageable);
 
-        results.addAll(productRepository.findByCategoryAndTimeAndSkinTypeAndGoals(category, time, skinType, goals));
-
-        if (results.size() < 6) {
-            results.addAll(productRepository.findByCategoryAndTimeAndSkinType(category, time, skinType));
+        if (results.hasContent()) {
+            return results;
         }
 
-        if (results.size() < 6) {
-            results.addAll(productRepository.findByCategoryAndTimeAndGoals(category, time, goals));
+        results = productRepository.findRecommendationsBySkinType(category, time, skinType, pageable);
+
+        if (results.hasContent()) {
+            return results;
         }
 
-        if (results.size() < 6) {
-            results.addAll(productRepository.findByCategoryAndTime(category, time));
-        }
-        if (results.isEmpty()) {
-            results.addAll(productRepository.findByCategory(category));
+        results = productRepository.findRecommendationsByGoals(category, time, goals, pageable);
+
+        if (results.hasContent()) {
+            return results;
         }
 
-        return new ArrayList<>(results);
+        results = productRepository.findRecommendationsByCategoryAndTime(category, time, pageable);
+
+        if (results.hasContent()) {
+            return results;
+        }
+
+        return productRepository.findSummaryByCategory(category, pageable);
+    }
+
+    public List<ProductSummaryDTO> findForRoutineSimple(
+            ProductCategory category,
+            ProductApplicationTime time,
+            SkinType skinType,
+            Set<Goal> goals,
+            int limit) {
+
+        Pageable pageable = PageRequest.of(0, limit);
+        return findForRoutine(category, time, skinType, goals, pageable).getContent();
+    }
+
+    public Page<ProductSummaryDTO> findAllSummary(Pageable pageable) {
+        return productRepository.findAllSummary(pageable);
+    }
+
+    public ProductSummaryDTO findSummaryById(Long id) {
+        return productRepository.findSummaryById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
     }
 }
